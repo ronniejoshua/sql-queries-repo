@@ -162,6 +162,7 @@ FROM store_sales;
 
 
 SELECT
-	ROUND(REGR_SLOPE(employee_shifts, units_sold)::numeric, 4) * 1500 + 
-    ROUND(REGR_INTERCEPT(employee_shifts, units_sold)::numeric,2) as predicted_value
+	ROUND(
+			(REGR_SLOPE(employee_shifts, units_sold) * 1500 + REGR_INTERCEPT(employee_shifts, units_sold))::numeric, 2
+		 ) as predicted_value
 FROM store_sales;
