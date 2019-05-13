@@ -1,6 +1,5 @@
 /* Basics: Count, Min, and Max */
 
-
 SELECT * 
 FROM store_sales;
 
