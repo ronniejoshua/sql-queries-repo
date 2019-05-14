@@ -252,7 +252,7 @@ GROUP BY
 
 DROP INDEX time_series.idx_util_time_serv;
 
-/* Commonly Used Time Series Functions */
+/* Using Views in PosgreSQL */
 CREATE VIEW time_series.v_utilization AS (
     SELECT
         *,
@@ -275,4 +275,134 @@ FROM
     time_series.v_utilization
 WHERE
     event_time BETWEEN '2019-03-05'
-    AND '2019-03-06'
+    AND '2019-03-06';
+
+/* Common Table Expression */
+-----------------------------
+
+WITH daily_avg_temp AS (
+    SELECT
+        date_trunc('day', event_time) AS event_date,
+        avg(temp_celcius) AS avg_temp
+    FROM
+        time_series.location_temp
+    GROUP BY
+        date_trunc('day', event_time)
+)
+SELECT
+    event_date,
+    avg_temp
+FROM
+    daily_avg_temp;
+
+/* Aggregation Over Windows */
+-----------------------------
+
+SELECT
+    server_id,
+    cpu_utilization,
+    avg(cpu_utilization) OVER (PARTITION BY server_id)
+FROM
+    time_series.utilization
+WHERE
+    event_time BETWEEN '2019-03-05'
+    AND '2019-03-06';
+
+/* Aggregation Over Windows - Comparision */
+--------------------------------------------
+
+WITH daily_avg_temp AS (
+    SELECT
+        date_trunc('day', event_time) AS event_date,
+        avg(temp_celcius) AS avg_temp
+    FROM
+        time_series.location_temp
+    GROUP BY
+        date_trunc('day', event_time)
+)
+SELECT
+    event_date,
+    avg_temp,
+    (
+        SELECT
+            avg_temp
+        FROM
+            daily_avg_temp AS dat2
+        WHERE
+            dat2.event_date = dat1.event_date - interval '1' day) AS previous_avg_temp
+FROM
+    daily_avg_temp AS dat1;
+
+/* MOVING AVERAGE */
+--------------------
+
+SELECT
+    event_time,
+    server_id,
+    avg(cpu_utilization) OVER (ORDER BY event_time ROWS BETWEEN 12 PRECEDING AND CURRENT ROW) AS hourly_cpu_util
+FROM
+    time_series.utilization;
+
+/* WEIGHTED MOVING AVERAGE */
+-----------------------------
+
+WITH daily_avg_temp AS (
+    SELECT
+        date_trunc('day', event_time) AS event_date,
+        avg(temp_celcius) AS avg_temp
+    FROM
+        time_series.location_temp
+    GROUP BY
+        date_trunc('day', event_time)
+)
+SELECT
+    event_date,
+    round(avg_temp, 2),
+    (
+        SELECT
+            round(avg_temp * 0.5, 2)
+        FROM
+            daily_avg_temp AS dat2
+        WHERE
+            date_trunc('day', dat1.event_date) - interval '1' day = date_trunc('day', dat2.event_date)) + (
+        SELECT
+            round(avg_temp * 0.333, 2)
+        FROM
+            daily_avg_temp AS dat2
+        WHERE
+            date_trunc('day', dat1.event_date) - interval '2' day = date_trunc('day', dat2.event_date)) + (
+        SELECT
+            round(avg_temp * 0.167, 2)
+        FROM
+            daily_avg_temp AS dat2
+        WHERE
+            date_trunc('day', dat1.event_date) - interval '2' day = date_trunc('day', dat2.event_date)) AS wmp_temp
+FROM
+    daily_avg_temp AS dat1;
+
+/* Forecasting Liner Regression */
+----------------------------------
+
+/* y = mx + b
+ m = slope
+ b = intercept
+ x = input value
+ y = predicted value
+ */
+SELECT
+    regr_slope(free_memory, cpu_utilization) AS slope,
+    regr_intercept(free_memory, cpu_utilization) AS intercept
+FROM
+    time_series.utilization
+WHERE
+    event_time BETWEEN '2019-03-05'
+    AND '2019-03-06';
+
+SELECT
+    regr_slope(free_memory, cpu_utilization) * 0.60 + regr_intercept(free_memory, cpu_utilization) AS PV_free_memory
+FROM
+    time_series.utilization
+WHERE
+    event_time BETWEEN '2019-03-05'
+    AND '2019-03-06';
+
