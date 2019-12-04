@@ -41,3 +41,26 @@ FROM
       UNNEST(GENERATE_DATE_ARRAY('2019-12-01', '2019-12-31')) AS date
 ORDER BY 
       date;
+
+
+
+
+SELECT 
+  CURRENT_DATETIME() as now,
+  DATETIME(2019, 12, 25, 05, 30, 00) as datetime_ymdhms,
+  DATETIME('2019-12-25', "America/Los_Angeles") as dateexp_timeexp,
+  DATETIME(TIMESTAMP "2019-12-25 05:30:00+00", "America/Los_Angeles") as datetime_tstz,
+  DATETIME_ADD(CURRENT_DATETIME(), INTERVAL 12 HOUR) as datetime_add_hour,
+  DATETIME_ADD(CURRENT_DATETIME(), INTERVAL 60 MINUTE) as datetime_add_minutes,
+  DATETIME_ADD(CURRENT_DATETIME(), INTERVAL 100 SECOND) as datetime_add_seconds,
+  DATETIME_SUB(CURRENT_DATETIME(), INTERVAL 12 HOUR) as datetime_sub_hour,
+  DATETIME_SUB(CURRENT_DATETIME(), INTERVAL 60 MINUTE) as datetime_sub_minutes,
+  DATETIME_SUB(CURRENT_DATETIME(), INTERVAL 100 SECOND) as datetime_sub_seconds,
+  DATETIME_DIFF(CURRENT_DATETIME(), DATETIME "1983-11-17 00:00:01", DAY) as diff_days,
+  DATETIME_DIFF(CURRENT_DATETIME(), DATETIME "1983-11-17 00:00:01", MICROSECOND) as diff_ms,
+  DATETIME_TRUNC(CURRENT_DATETIME(), HOUR) as trunc_hour,
+  DATETIME_TRUNC(CURRENT_DATETIME(), MINUTE) as trunc_minutes,
+  FORMAT_DATETIME("%c", CURRENT_DATETIME()) AS formatted,
+  PARSE_DATETIME('%Y-%m-%d %H:%M:%S', '1983-11-17 13:45:55') AS datetime_1,
+  PARSE_DATETIME('%A, %B %e, %Y','Wednesday, December 19, 2018') AS datetime_2;
+  
