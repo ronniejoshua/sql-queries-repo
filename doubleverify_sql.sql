@@ -152,6 +152,6 @@ FROM
 LEFT JOIN analysts_rules AS ar ON
     ci.site = ar.site
     AND ci.cum_events >= ar.num_of_events
-    AND hours_since <= ar.time_frame_hours
+    AND ci.hours_since <= ar.time_frame_hours
 WHERE
     action_needed LIKE 'fraud';
